@@ -1,0 +1,7 @@
+[package]
+name = "automatic-printer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ipp = "5.0.4"
