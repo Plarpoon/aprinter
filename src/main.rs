@@ -1,15 +1,8 @@
-use ipp::client::IppClient;
-use ipp::model::IppAttribute;
-use ipp::model::Uri;
+use ipp::payload::IppPayload;
 use ipp::prelude::*;
-use ipp::request::IppRequest;
-use ipp::request::Operation;
-use ipp::response::StatusCode;
-use std::convert::TryFrom;
 use std::env;
-use std::error::Error;
 use std::fs::File;
-use std::io::Read;
+use std::io::{Cursor, Read};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -33,7 +26,7 @@ impl CupsPrinter {
     }
 
     /// Method to print all files, with delay between prints if more than one file
-    fn print_files(&self) -> Result<(), Box<dyn Error>> {
+    fn print_files(&self) -> Result<(), Box<dyn std::error::Error>> {
         let file_count = self.file_names.len(); // Count of the files
 
         // If no files are provided, print a message and return
@@ -57,36 +50,30 @@ impl CupsPrinter {
     }
 
     /// Helper method to print a single file using the IPP protocol and CUPS
-    fn print_file(&self, file_name: &str) -> Result<(), Box<dyn Error>> {
+    fn print_file(&self, file_name: &str) -> Result<(), Box<dyn std::error::Error>> {
         // Load the file to be printed
         let mut file = File::open(file_name)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
 
+        // Convert buffer to a readable Cursor
+        let payload = IppPayload::new(Cursor::new(buffer));
+
         // Construct the CUPS server URL (IPP protocol)
-        let uri_string = format!("ipp://{}/printers/{}", self.cups_server, self.printer_name);
-        let uri = Uri::try_from(uri_string)?;
+        let uri: Uri =
+            format!("http://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
 
         // Create a new IPP client targeting the CUPS server
-        let client = IppClient::new(uri);
+        let client = IppClient::new(uri.clone());
 
-        // Create a new print job request
-        let mut req = IppRequest::new(Operation::PrintJob);
-        req.operation().attributes().charset("utf-8");
-        req.operation().attributes().natural_language("en");
-        req.operation().attributes().uri("printer-uri", uri);
-        req.operation()
-            .attributes()
-            .name("job-name", "Rust Print Job");
-
-        // Attach the file content to the request
-        req.set_payload(buffer);
+        // Create a new print job operation with the payload
+        let operation = IppOperationBuilder::print_job(uri, payload).build();
 
         // Send the request to the CUPS server and check the response
-        let response = client.send(req)?;
+        let response = client.send(operation)?;
 
         // Check if the job was successfully submitted
-        if response.header().status_code() == StatusCode::SuccessfulOk {
+        if response.header().status_code().is_success() {
             println!("Successfully submitted print job for file: {}", file_name);
         } else {
             eprintln!(
@@ -110,7 +97,7 @@ impl CupsPrinter {
 }
 
 /// Function to parse command-line arguments and return parsed values for server, printer, delay, and file names
-fn parse_arguments() -> Result<(String, String, u64, Vec<String>), Box<dyn Error>> {
+fn parse_arguments() -> Result<(String, String, u64, Vec<String>), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect(); // Collect all arguments passed to the program
 
     // Default values for CUPS server, printer name, file names, and delay
@@ -176,7 +163,7 @@ fn parse_arguments() -> Result<(String, String, u64, Vec<String>), Box<dyn Error
     Ok((cups_server, printer_name, delay, file_names)) // Return the parsed values
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command-line arguments and retrieve values for CUPS server, printer, delay, and files
     let (cups_server, printer_name, delay, file_names) = parse_arguments()?;
 
