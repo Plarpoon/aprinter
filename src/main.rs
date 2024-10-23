@@ -1,4 +1,3 @@
-mod defaultp;
 mod manual;
 mod parser;
 
@@ -11,9 +10,9 @@ use std::time::Duration;
 
 /// Struct representing the CUPS printer configuration and the print job details
 struct CupsPrinter {
-    cups_server: String,     // Address of the CUPS server
-    printer_name: String,    // Name of the printer
-    file_names: Vec<String>, // List of file names to be printed
+    cups_server: String,     // The address of the CUPS server
+    printer_name: String,    // The name of the printer
+    file_names: Vec<String>, // List of files to be printed
     delay: u64,              // Delay between prints (in seconds)
 }
 
@@ -30,9 +29,9 @@ impl CupsPrinter {
 
     /// Method to print all files, with delay between prints if more than one file
     fn print_files(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let file_count = self.file_names.len(); // Count of the files
+        let file_count = self.file_names.len(); // Count the number of files to be printed
 
-        // If no files are provided, print a message and return
+        // If no files are provided, print a message and return early
         if file_count == 0 {
             println!("There is nothing to print.");
             return Ok(());
@@ -42,7 +41,7 @@ impl CupsPrinter {
         for (index, file_name) in self.file_names.iter().enumerate() {
             self.print_file(file_name)?; // Print the current file
 
-            // If more than one file, apply the delay
+            // If more than one file, apply the delay between prints
             if file_count > 1 && index < file_count - 1 {
                 println!("Delaying for {} seconds...", self.delay);
                 sleep(Duration::from_secs(self.delay)); // Sleep for the specified delay
@@ -54,15 +53,15 @@ impl CupsPrinter {
 
     /// Helper method to print a single file using the IPP protocol and CUPS
     fn print_file(&self, file_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        // Load the file to be printed
+        // Open the file to be printed
         let mut file = File::open(file_name)?;
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
+        let mut buffer = Vec::new(); // Create a buffer to store the file content
+        file.read_to_end(&mut buffer)?; // Read the file content into the buffer
 
-        // Convert buffer to a readable Cursor
+        // Convert buffer to a readable Cursor to be used as the print payload
         let payload = IppPayload::new(Cursor::new(buffer));
 
-        // Construct the CUPS server URL (IPP protocol)
+        // Construct the CUPS server URI (IPP protocol)
         let uri: Uri =
             format!("ipp://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
 
@@ -89,32 +88,27 @@ impl CupsPrinter {
         Ok(())
     }
 
-    /// Method to display the current configuration of the printer and job
+    /// Method to display the current configuration
     fn display_parameters(&self) {
         println!("Executing print job with the following parameters:");
-        println!("CUPS Server: {}", self.cups_server);
-        println!("Printer Name: {}", self.printer_name);
-        println!("Delay Between Prints: {} seconds", self.delay);
-        println!("Files to Print: {:?}", self.file_names);
+        println!("CUPS Server: {}", self.cups_server); // Display the CUPS server address
+        println!("Printer Name: {}", self.printer_name); // Display the printer name
+        println!("Delay Between Prints: {} seconds", self.delay); // Display the delay
+        println!("Files to Print: {:?}", self.file_names); // Display the list of files to be printed
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command-line arguments and retrieve values for CUPS server, printer, delay, and files
-    let (cups_server, mut printer_name, delay, file_names) = parser::parse_arguments()?;
-
-    // If the printer name is "default", query the default printer from the CUPS server
-    if printer_name == "default" {
-        printer_name = defaultp::get_default_printer(&cups_server)?;
-    }
+    let (cups_server, printer_name, delay, file_names) = parser::parse_arguments()?;
 
     // Create a CupsPrinter instance with the parsed values
     let printer = CupsPrinter::new(cups_server, printer_name, file_names, delay);
 
-    // Display the parameters being used
+    // Display the parameters being used for the print job
     printer.display_parameters();
 
-    // Print the files, handling any errors
+    // Print the files, handling any errors that occur
     printer.print_files()?;
 
     Ok(())
