@@ -1,19 +1,20 @@
+mod defaultp;
 mod manual;
 mod parser;
 
-use ipp::prelude::*;
 use ipp::payload::IppPayload;
+use ipp::prelude::*;
 use std::fs::File;
-use std::io::{Read, Cursor};
-use std::time::Duration;
+use std::io::{Cursor, Read};
 use std::thread::sleep;
+use std::time::Duration;
 
 /// Struct representing the CUPS printer configuration and the print job details
 struct CupsPrinter {
-    cups_server: String,  // Address of the CUPS server
-    printer_name: String, // Name of the printer
+    cups_server: String,     // Address of the CUPS server
+    printer_name: String,    // Name of the printer
     file_names: Vec<String>, // List of file names to be printed
-    delay: u64, // Delay between prints (in seconds)
+    delay: u64,              // Delay between prints (in seconds)
 }
 
 impl CupsPrinter {
@@ -62,7 +63,8 @@ impl CupsPrinter {
         let payload = IppPayload::new(Cursor::new(buffer));
 
         // Construct the CUPS server URL (IPP protocol)
-        let uri: Uri = format!("ipp://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
+        let uri: Uri =
+            format!("ipp://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
 
         // Create a new IPP client targeting the CUPS server
         let client = IppClient::new(uri.clone());
@@ -79,7 +81,8 @@ impl CupsPrinter {
         } else {
             eprintln!(
                 "Failed to submit print job for file: {}. Status: {:?}",
-                file_name, response.header().status_code()
+                file_name,
+                response.header().status_code()
             );
         }
 
@@ -98,7 +101,12 @@ impl CupsPrinter {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse command-line arguments and retrieve values for CUPS server, printer, delay, and files
-    let (cups_server, printer_name, delay, file_names) = parser::parse_arguments()?;
+    let (cups_server, mut printer_name, delay, file_names) = parser::parse_arguments()?;
+
+    // If the printer name is "default", query the default printer from the CUPS server
+    if printer_name == "default" {
+        printer_name = defaultp::get_default_printer(&cups_server)?;
+    }
 
     // Create a CupsPrinter instance with the parsed values
     let printer = CupsPrinter::new(cups_server, printer_name, file_names, delay);
