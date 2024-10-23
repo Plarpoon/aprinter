@@ -15,7 +15,7 @@ OPTIONS
         Specifies the URL or IP address of the CUPS server. Defaults to "localhost" if not provided.
 
     -pname printer
-        Specifies the name of the printer. Defaults to "default" if not provided.
+        Specifies the name of the printer. Defaults to CUPS "server-default" if not provided.
 
     -delay delay
         Specifies the delay (in seconds) between each print job. Defaults to 1 second.
