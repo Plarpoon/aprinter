@@ -59,9 +59,9 @@ impl CupsPrinter {
         // Convert buffer to a readable Cursor
         let payload = IppPayload::new(Cursor::new(buffer));
 
-        // Construct the CUPS server URL (IPP protocol)
+        // Construct the CUPS server URL using IPP protocol and port 631
         let uri: Uri =
-            format!("http://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
+            format!("ipp://{}/printers/{}", self.cups_server, self.printer_name).parse()?;
 
         // Create a new IPP client targeting the CUPS server
         let client = IppClient::new(uri.clone());
