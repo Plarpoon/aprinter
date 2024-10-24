@@ -5,6 +5,7 @@ use ipp::payload::IppPayload;
 use ipp::prelude::*;
 use std::fs::File;
 use std::io::{Cursor, Read};
+use std::path::Path;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -37,12 +38,31 @@ impl CupsPrinter {
             return Ok(());
         }
 
-        // Loop through each file and print it
-        for (index, file_name) in self.file_names.iter().enumerate() {
+        let mut valid_files = vec![]; // A list to store the valid (existing) files
+
+        // Check if each file exists and collect valid files
+        for file_name in &self.file_names {
+            if Path::new(file_name).exists() {
+                valid_files.push(file_name.clone());
+            } else {
+                eprintln!("Warning: File does not exist: {}", file_name); // Print warning for missing file
+            }
+        }
+
+        let valid_file_count = valid_files.len();
+
+        // If no valid files are found, print a message and return early
+        if valid_file_count == 0 {
+            println!("No valid files to print.");
+            return Ok(());
+        }
+
+        // Loop through each valid file and print it
+        for (index, file_name) in valid_files.iter().enumerate() {
             self.print_file(file_name)?; // Print the current file
 
             // If more than one file, apply the delay between prints
-            if file_count > 1 && index < file_count - 1 {
+            if valid_file_count > 1 && index < valid_file_count - 1 {
                 println!("Delaying for {} seconds...", self.delay);
                 sleep(Duration::from_secs(self.delay)); // Sleep for the specified delay
             }
