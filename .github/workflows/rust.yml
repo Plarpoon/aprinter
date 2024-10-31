@@ -29,12 +29,12 @@ jobs:
 
       # Automatically create a GitHub release when a tag is pushed
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/') # Ensures this step runs only on tag pushes
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }} # Uses the tag name for the release
+          tag_name: ${{ github.ref_name }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub token to authorize the release
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
       # Optionally, upload built artifacts to the release
       - name: Upload Release Assets

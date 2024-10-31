@@ -1,4 +1,5 @@
-use crate::manual;
+use crate::{manual, version};
+
 use std::env;
 use std::error::Error;
 
@@ -12,6 +13,12 @@ pub fn parse_arguments() -> Result<(String, String, u64, Vec<String>), Box<dyn E
     // If the user provides the `-help` flag, display the manual and exit the program
     if args.contains(&String::from("-help")) {
         manual::print_manual();
+        std::process::exit(0);
+    }
+
+    // If the user provides the `-version` flag, display the version info and exit the program
+    if args.contains(&String::from("-version")) {
+        version::print_version_info();
         std::process::exit(0);
     }
 

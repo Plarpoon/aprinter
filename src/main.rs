@@ -1,5 +1,6 @@
 mod manual;
 mod parser;
+mod version;
 
 use ipp::payload::IppPayload;
 use ipp::prelude::*;
