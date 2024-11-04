@@ -42,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: target/release/automatic-printer # Path to your executable or assets to upload
+          path: target/release/aprinter # Path to your executable or assets to upload
