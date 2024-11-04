@@ -1,6 +1,6 @@
-pub const VERSION: &str = "v1.0.1";
+pub const VERSION: &str = "v1.1.0";
 pub const GITHUB_LINK: &str = "https://github.com/plarpoon/aprinter";
-pub const CHANGELOG: &str = "Added version parameter";
+pub const CHANGELOG: &str = "OpenSSL is now statically linked";
 
 pub fn print_version_info() {
     println!("Version: {}", VERSION);
